@@ -1,0 +1,9 @@
+# Build directory
+build
+
+# ESP-IDF config
+sdkconfig
+sdkconfig.old
+
+# Visual Studio Code IDE
+.vscode
