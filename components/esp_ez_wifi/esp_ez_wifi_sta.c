@@ -10,7 +10,7 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
-static const char* TAG = "wifi";
+static const char* TAG = "wifi_sta";
 
 static bool initialized = false;
 static bool connected = false;
@@ -71,10 +71,11 @@ void sta_stop() {
 
     ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_deinit());
-    ESP_ERROR_CHECK(esp_netif_deinit());
+
+    esp_netif_destroy_default_wifi(netif_wifi);
+    esp_netif_deinit();  // No error check since it is still not supported
 
     vEventGroupDelete(wifi_event_group);
-    esp_netif_destroy_default_wifi(netif_wifi);
 
     esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID,
                                           instance_any_id);

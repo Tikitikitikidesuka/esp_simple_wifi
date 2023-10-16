@@ -1,8 +1,13 @@
+#include "esp_ez_wifi_ap.h"
 #include "esp_ez_wifi_sta.h"
 
 #include "freertos/FreeRTOS.h"
 
 void app_main() {
+  ap_start("ssid", "password", 2, 10, false);
+  vTaskDelay(2000);
+  ap_stop();
+
   sta_start();
 
   sta_connect("ssid", "password", 5);
