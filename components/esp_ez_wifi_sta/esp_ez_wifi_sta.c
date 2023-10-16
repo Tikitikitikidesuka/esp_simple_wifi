@@ -7,8 +7,6 @@
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 
-#define CONNECT_MAXIMUM_RETRY 5
-
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
@@ -17,6 +15,7 @@ static const char* TAG = "wifi";
 static bool initialized = false;
 static bool connected = false;
 static bool connecting = false;
+static uint8_t max_retry_num = 0;
 static uint8_t retry_num = 0;
 static EventGroupHandle_t wifi_event_group;
 static esp_netif_t* netif_wifi;
@@ -90,7 +89,7 @@ void sta_stop() {
   }
 }
 
-bool sta_connect(const char* ssid, const char* password) {
+bool sta_connect(const char* ssid, const char* password, uint8_t attempts) {
   check_initialized();
 
   if (connecting) {
@@ -102,6 +101,7 @@ bool sta_connect(const char* ssid, const char* password) {
     sta_disconnect_helper();
 
   connecting = true;
+  max_retry_num = attempts - 1;
   connected = sta_connect_helper(ssid, password);
   connecting = false;
 
@@ -227,7 +227,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 }
 
 static bool retry_connection() {
-  if (retry_num >= CONNECT_MAXIMUM_RETRY)
+  if (retry_num >= max_retry_num)
     return false;
 
   ++retry_num;

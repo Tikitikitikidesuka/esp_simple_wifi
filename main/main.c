@@ -5,7 +5,7 @@
 void app_main() {
   sta_start();
 
-  sta_connect("ssid", "password");
+  sta_connect("ssid", "password", 5);
 
   esp_netif_ip_info_t connection_info;
   if (sta_connection_info(&connection_info)) {
