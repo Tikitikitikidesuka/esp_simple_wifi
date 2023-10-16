@@ -18,9 +18,8 @@ static bool initialized = false;
 static bool connected = false;
 static bool connecting = false;
 static uint8_t retry_num = 0;
-static esp_netif_ip_info_t connection_info;
 static EventGroupHandle_t wifi_event_group;
-static esp_netif_t* netif_default_wifi;
+static esp_netif_t* netif_wifi;
 static esp_event_handler_instance_t instance_any_id;
 static esp_event_handler_instance_t instance_got_ip;
 
@@ -48,7 +47,7 @@ void sta_start() {
     if (wifi_event_group == NULL)
       ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
 
-    netif_default_wifi = esp_netif_create_default_wifi_sta();
+    netif_wifi = esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -76,7 +75,7 @@ void sta_stop() {
     ESP_ERROR_CHECK(esp_netif_deinit());
 
     vEventGroupDelete(wifi_event_group);
-    esp_netif_destroy_default_wifi(netif_default_wifi);
+    esp_netif_destroy_default_wifi(netif_wifi);
 
     esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID,
                                           instance_any_id);
@@ -123,6 +122,10 @@ bool sta_disconnect() {
   return !connected;
 }
 
+bool sta_set_connection_info(esp_netif_ip_info_t connection_info) {
+  return esp_netif_set_ip_info(netif_wifi, connection_info) == ESP_OK;
+}
+
 bool sta_connected() {
   check_initialized();
 
@@ -133,7 +136,7 @@ bool sta_connection_info(esp_netif_ip_info_t* sta_connection_info) {
   check_initialized();
 
   if (connected)
-    *sta_connection_info = connection_info;
+    *sta_connection_info = esp_netif_get_ip_info(netif_wifi);
 
   return connected;
 }
@@ -217,7 +220,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     if (event_id == IP_EVENT_STA_GOT_IP) {
       ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
       ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-      connection_info = event->ip_info;
       retry_num = 0;
       xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
