@@ -67,13 +67,17 @@ An example can be found in the `main` directory of this repository. It connects 
 #include "freertos/FreeRTOS.h"
 
 void app_main() {
+  sta_start();
+
   sta_connect("ssid", "password");
 
   esp_netif_ip_info_t connection_info;
-  if (sta_connectionInfo(&connection_info)) {
-    printf("ip: " IPSTR, IP2STR(&connection_info.ip));
+  if (sta_connection_info(&connection_info)) {
+    printf("ip: " IPSTR "\n", IP2STR(&connection_info.ip));
   }
 }
+
+
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

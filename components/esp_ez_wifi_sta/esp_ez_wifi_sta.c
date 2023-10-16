@@ -12,110 +12,135 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
+static const char* TAG = "wifi";
+
 static bool initialized = false;
 static bool connected = false;
+static bool connecting = false;
 static uint8_t retry_num = 0;
 static esp_netif_ip_info_t connection_info;
 static EventGroupHandle_t wifi_event_group;
+static esp_netif_t* netif_default_wifi;
+static esp_event_handler_instance_t instance_any_id;
+static esp_event_handler_instance_t instance_got_ip;
 
 static void init_nvs();
-static void start_station();
-static void stop_station();
+static void check_initialized();
+static bool sta_connect_helper(char* ssid, char* password);
+static void sta_disconnect_helper();
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
+static bool retry_connection();
 
 /* --------------------------------------- */
 /* --           API Functions           -- */
 /* --------------------------------------- */
 
-void sta_init() {
+void sta_start() {
   if (!initialized) {
-    init_nvs();
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-  } else {
-    ESP_LOGI(TAG, "station already initialized.");
-  }
-}
-
-void sta_connect(char* ssid, char* password) {
-  if (!initialized) {
-    ESP_LOGI(TAG, "initialize station with function \'init_station()\'.");
-    sta_init();
     initialized = true;
+
+    init_nvs();
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    wifi_event_group = xEventGroupCreate();
+    if (wifi_event_group == NULL)
+      ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+
+    netif_default_wifi = esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(
+        WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(
+        IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
+
+    ESP_LOGI(TAG, "WiFi station started.");
+  } else {
+    ESP_LOGI(TAG, "WiFi station is already active.");
+  }
+}
+
+void sta_stop() {
+  if (initialized) {
+    initialized = false;
+
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+    ESP_ERROR_CHECK(esp_netif_deinit());
+
+    vEventGroupDelete(wifi_event_group);
+    esp_netif_destroy_default_wifi(netif_default_wifi);
+
+    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                          instance_any_id);
+    esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                          instance_got_ip);
+
+    ESP_ERROR_CHECK(esp_event_loop_delete_default());
+
+    ESP_LOGI(TAG, "WiFi station stopped.");
+  } else {
+    ESP_LOGI(TAG, "WiFi station is not active.");
+  }
+}
+
+bool sta_connect(char* ssid, char* password) {
+  check_initialized();
+
+  if (connecting) {
+    ESP_LOGE(TAG, "cannot connect until previous connection finishes.");
+    return false;
   }
 
-  start_station(ssid, password);
-}
+  if (connected)
+    sta_disconnect_helper();
 
-void sta_disconnect() {
-  stop_station();
-}
+  connecting = true;
+  connected = sta_connect_helper(ssid, password);
+  connecting = false;
 
-bool sta_connected() {
   return connected;
 }
 
-bool sta_connectionInfo(esp_netif_ip_info_t* sta_connection_info) {
-  //memcpy(sta_connection_info, )
-  *sta_connection_info = connection_info;
+bool sta_disconnect() {
+  check_initialized();
+
+  if (connecting) {
+    ESP_LOGE(TAG, "cannot disconnect while connecting.");
+    return false;
+  }
+
+  sta_disconnect_helper();
+  connected = false;
+
+  return !connected;
+}
+
+bool sta_connected() {
+  check_initialized();
+
+  return connected;
+}
+
+bool sta_connection_info(esp_netif_ip_info_t* sta_connection_info) {
+  check_initialized();
+
+  if (connected)
+    *sta_connection_info = connection_info;
+
   return connected;
 }
 
 /* --------------------------------------- */
 /* --         Helper Functions          -- */
 /* --------------------------------------- */
-
-static void start_station(char* ssid, char* password) {
-  wifi_event_group = xEventGroupCreate();
-
-  ESP_ERROR_CHECK(esp_netif_init());
-
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
-  esp_netif_create_default_wifi_sta();
-
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-  esp_event_handler_instance_t instance_any_id;
-  esp_event_handler_instance_t instance_got_ip;
-  ESP_ERROR_CHECK(esp_event_handler_instance_register(
-      WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-  ESP_ERROR_CHECK(esp_event_handler_instance_register(
-      IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
-
-  wifi_config_t wifi_config = {.sta = {.ssid = "", .password = ""}};
-  strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
-  strncpy((char*)wifi_config.sta.password, password,
-          sizeof(wifi_config.sta.password) - 1);
-  wifi_config.sta.ssid[sizeof(wifi_config.sta.ssid) - 1] = '\0';
-  wifi_config.sta.password[sizeof(wifi_config.sta.password) - 1] = '\0';
-
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-  ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-  ESP_ERROR_CHECK(esp_wifi_start());
-
-  ESP_LOGI(TAG, "init_station finished.");
-
-  EventBits_t bits =
-      xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-                          pdFALSE, pdFALSE, portMAX_DELAY);
-
-  if (bits & WIFI_CONNECTED_BIT) {
-    ESP_LOGI(TAG, "connected to ap SSID: %s.", ssid);
-    connected = true;
-  } else if (bits & WIFI_FAIL_BIT) {
-    ESP_LOGI(TAG, "failed to connect to SSID: %s.", ssid);
-    connected = false;
-  } else {
-    ESP_LOGI(TAG, "unexpected event.");
-    connected = false;
-  }
-}
-
-static void stop_station() {
-  esp_wifi_stop();
-  connected = false;
-}
 
 static void init_nvs() {
   esp_err_t ret = nvs_flash_init();
@@ -129,25 +154,83 @@ static void init_nvs() {
   ESP_LOGI(TAG, "init_nvs finished.");
 }
 
+static void check_initialized() {
+  if (!initialized) {
+    ESP_LOGE(TAG,
+             "WiFi station is not active. Make sure to activate it with "
+             "\'sta_start()\' before calling other WiFi station functions.");
+
+    ESP_ERROR_CHECK(ESP_ERR_WIFI_NOT_INIT);
+  }
+};
+
+static bool sta_connect_helper(char* ssid, char* password) {
+  wifi_config_t wifi_config = {.sta = {.ssid = "", .password = ""}};
+  strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
+  strncpy((char*)wifi_config.sta.password, password,
+          sizeof(wifi_config.sta.password) - 1);
+  wifi_config.sta.ssid[sizeof(wifi_config.sta.ssid) - 1] = '\0';
+  wifi_config.sta.password[sizeof(wifi_config.sta.password) - 1] = '\0';
+
+  ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+  esp_wifi_connect();
+
+  ESP_LOGI(TAG, "starting WiFi connection to SSID: %s.", wifi_config.sta.ssid);
+
+  EventBits_t bits =
+      xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+                          pdTRUE, pdFALSE, portMAX_DELAY);
+
+  bool success = false;
+
+  if (bits & WIFI_CONNECTED_BIT) {
+    ESP_LOGI(TAG, "connected to WiFi with SSID: %s.", wifi_config.sta.ssid);
+    success = true;
+  } else if (bits & WIFI_FAIL_BIT) {
+    ESP_LOGI(TAG, "failed to connect to WiFi with SSID: %s.",
+             wifi_config.sta.ssid);
+    success = false;
+  } else {
+    ESP_LOGI(TAG, "unexpected event.");
+    success = false;
+  }
+
+  return success;
+}
+
+static void sta_disconnect_helper() {
+  esp_wifi_disconnect();
+  ESP_LOGI(TAG, "disconnected from AP.");
+}
+
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data) {
-  if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-    esp_wifi_connect();
-  } else if (event_base == WIFI_EVENT &&
-             event_id == WIFI_EVENT_STA_DISCONNECTED) {
-    ESP_LOGI(TAG, "connect to the AP fail");
-    if (retry_num < CONNECT_MAXIMUM_RETRY) {
-      esp_wifi_connect();
-      retry_num++;
-      ESP_LOGI(TAG, "retry to connect to the AP");
-    } else {
-      xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+  if (event_base == WIFI_EVENT) {
+    if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+      if (connecting) {
+        ESP_LOGI(TAG, "connection to the AP failed.");
+        if (!retry_connection())
+          xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+      }
     }
-  } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-    ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
-    ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-    connection_info = event->ip_info;
-    retry_num = 0;
-    xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+  } else if (event_base == IP_EVENT) {
+    if (event_id == IP_EVENT_STA_GOT_IP) {
+      ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
+      ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+      connection_info = event->ip_info;
+      retry_num = 0;
+      xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    }
   }
+}
+
+static bool retry_connection() {
+  if (retry_num >= CONNECT_MAXIMUM_RETRY)
+    return false;
+
+  ++retry_num;
+  esp_wifi_connect();
+  ESP_LOGI(TAG, "retrying to connect to the AP.");
+
+  return true;
 }
