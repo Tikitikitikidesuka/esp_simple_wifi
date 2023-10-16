@@ -25,7 +25,7 @@ static esp_event_handler_instance_t instance_got_ip;
 
 static void init_nvs();
 static void check_initialized();
-static bool sta_connect_helper(char* ssid, char* password);
+static bool sta_connect_helper(const char* ssid, const char* password);
 static void sta_disconnect_helper();
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
@@ -90,7 +90,7 @@ void sta_stop() {
   }
 }
 
-bool sta_connect(char* ssid, char* password) {
+bool sta_connect(const char* ssid, const char* password) {
   check_initialized();
 
   if (connecting) {
@@ -122,7 +122,7 @@ bool sta_disconnect() {
   return !connected;
 }
 
-bool sta_set_connection_info(esp_netif_ip_info_t connection_info) {
+bool sta_set_connection_info(const esp_netif_ip_info_t* connection_info) {
   return esp_netif_set_ip_info(netif_wifi, connection_info) == ESP_OK;
 }
 
@@ -136,7 +136,7 @@ bool sta_connection_info(esp_netif_ip_info_t* sta_connection_info) {
   check_initialized();
 
   if (connected)
-    *sta_connection_info = esp_netif_get_ip_info(netif_wifi);
+    esp_netif_get_ip_info(netif_wifi, sta_connection_info);
 
   return connected;
 }
@@ -167,7 +167,7 @@ static void check_initialized() {
   }
 };
 
-static bool sta_connect_helper(char* ssid, char* password) {
+static bool sta_connect_helper(const char* ssid, const char* password) {
   wifi_config_t wifi_config = {.sta = {.ssid = "", .password = ""}};
   strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
   strncpy((char*)wifi_config.sta.password, password,
