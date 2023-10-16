@@ -132,7 +132,7 @@ bool sta_connected() {
   return connected;
 }
 
-bool sta_connection_info(esp_netif_ip_info_t* sta_connection_info) {
+bool sta_get_connection_info(esp_netif_ip_info_t* sta_connection_info) {
   check_initialized();
 
   if (connected)

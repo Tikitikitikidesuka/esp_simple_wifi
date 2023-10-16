@@ -14,6 +14,6 @@ bool sta_disconnect();
 bool sta_set_connection_info(const esp_netif_ip_info_t* connection_settings);
 
 bool sta_connected();
-bool sta_connection_info(esp_netif_ip_info_t* connection_info);
+bool sta_get_connection_info(esp_netif_ip_info_t* connection_info);
 
 #endif
