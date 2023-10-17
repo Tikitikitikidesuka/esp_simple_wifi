@@ -7,7 +7,7 @@
   <h3 align="center">Simple ESP Wifi Library</h3>
 
   <p align="center">
-    A hassle-free way of adding wifi to you ESP-IDF projects!
+    A hassle-free way of adding wifi to your ESP-IDF projects!
   </p>
 </div>
 
