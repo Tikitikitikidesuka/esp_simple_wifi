@@ -1,6 +1,6 @@
 set(component_srcs)
 
-idf_component_register(SRCS "esp_ez_wifi_sta.c" "esp_ez_wifi_ap.c" "${component_srcs}"
+idf_component_register(SRCS "esp_ez_wifi_helper.c" "esp_ez_wifi_sta.c" "esp_ez_wifi_ap.c" "${component_srcs}"
                        PRIV_REQUIRES driver
                        INCLUDE_DIRS "."
                        REQUIRES

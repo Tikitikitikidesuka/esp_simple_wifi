@@ -1,7 +1,7 @@
-#include "esp_ez_wifi_ap.h"
-#include "esp_ez_wifi_sta.h"
+#include "esp_ez_wifi.h"
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 void app_main() {
   ap_start("ssid", "password", 2, 10, false);
