@@ -113,6 +113,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Tikitikitikidesuka - deesneakygerbil@gmail.com
 
-Project Link: [https://github.com/Tikitikitikidesuka/esp_ez_wifi_sta](https://github.com/Tikitikitikidesuka/esp_ez_wifi_sta)
+Project Link: [https://github.com/Tikitikitikidesuka/esp_ez_wifi](https://github.com/Tikitikitikidesuka/esp_ez_wifi_sta)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
