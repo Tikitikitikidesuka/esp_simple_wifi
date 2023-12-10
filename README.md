@@ -53,8 +53,6 @@ This library can only be used in ESP-IDF projects and, therefore, requires that 
 
 To add the library to a project, simply copy the `esp_simple_wifi_sta` directory to the `components` directory of your ESP-IDF project. If the `components` directory does not exist, create it next to the `main` directory.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 You can also add it automatically with the IDF Component Manager. To do so, simply add these lines to your project's dependencies in the `idf_component.yml` file from the `main` directory:
 
 ```yml
@@ -62,6 +60,8 @@ esp_simple_wifi:
   path: components/esp_simple_wifi
   git: https://github.com/Tikitikitikidesuka/esp_simple_wifi
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->
 ## Usage
