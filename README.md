@@ -51,10 +51,17 @@ This library can only be used in ESP-IDF projects and, therefore, requires that 
 
 ### Installation
 
-To add the library to a project, simply copy the `esp_ez_wifi_sta` directory to the `components` directory of your ESP-IDF project. If the `components` directory does not exist, create it next to the `main` directory.
+To add the library to a project, simply copy the `esp_simple_wifi_sta` directory to the `components` directory of your ESP-IDF project. If the `components` directory does not exist, create it next to the `main` directory.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+You can also add it automatically with the IDF Component Manager. To do so, simply add these lines to your project's dependencies in the `idf_component.yml` file from the `main` directory:
+
+```yml
+esp_simple_wifi:
+  path: components/esp_simple_wifi
+  git: https://github.com/Tikitikitikidesuka/esp_simple_wifi
+```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
@@ -62,7 +69,7 @@ To add the library to a project, simply copy the `esp_ez_wifi_sta` directory to 
 An example can be found in the `main` directory of this repository. It connects to a wifi given it's SSID and password and prints the ip assigned.
 
 ```c
-#include "esp_ez_wifi_sta.h"
+#include "esp_simple_wifi_sta.h"
 
 #include "freertos/FreeRTOS.h"
 
@@ -113,6 +120,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Tikitikitikidesuka - deesneakygerbil@gmail.com
 
-Project Link: [https://github.com/Tikitikitikidesuka/esp_ez_wifi](https://github.com/Tikitikitikidesuka/esp_ez_wifi_sta)
+Project Link: [https://github.com/Tikitikitikidesuka/esp_simple_wifi](https://github.com/Tikitikitikidesuka/esp_simple_wifi_sta)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
