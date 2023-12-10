@@ -1,4 +1,4 @@
-#include "esp_ez_wifi_sta.h"
+#include "esp_simple_wifi_sta.h"
 
 #include <stdbool.h>
 #include <string.h>

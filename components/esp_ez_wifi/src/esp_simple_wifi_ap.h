@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "esp_ez_wifi_helper.h"
+#include "esp_simple_wifi_helper.h"
 
 typedef enum wifi_ap_start_status_t {
   WIFI_AP_START_SUCCESS,

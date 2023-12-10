@@ -1,9 +1,9 @@
-#include "esp_ez_wifi.h"
+#include "esp_simple_wifi.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-void app_main() {
+extern "C" void app_main() {
   ap_start("ssid", "password", 2, 10, false);
   vTaskDelay(2000);
   ap_stop();

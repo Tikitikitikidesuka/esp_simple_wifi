@@ -1,8 +1,22 @@
-set(component_srcs)
+cmake_minimum_required(VERSION 3.12)
 
-idf_component_register(SRCS "esp_ez_wifi_helper.c" "esp_ez_wifi_sta.c" "esp_ez_wifi_ap.c" "${component_srcs}"
-                       PRIV_REQUIRES driver
-                       INCLUDE_DIRS "."
-                       REQUIRES
-                            esp_wifi
-                            nvs_flash)
+set(srcs
+	src/esp_simple_wifi_sta.c
+	src/esp_simple_wifi_ap.c
+	src/esp_simple_wifi_helper.c
+)
+
+set(private_dependencies
+     esp_wifi
+     nvs_flash
+     driver
+)
+
+idf_component_register(
+	SRCS ${srcs}
+	INCLUDE_DIRS "include"
+     PRIV_INCLUDE_DIRS "src"
+     PRIV_REQUIRES ${private_dependencies}
+)
+
+project(EspSimpleWifi VERSION 0.0.0)

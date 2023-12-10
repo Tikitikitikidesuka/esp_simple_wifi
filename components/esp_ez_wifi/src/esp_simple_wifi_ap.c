@@ -1,4 +1,4 @@
-#include "esp_ez_wifi_ap.h"
+#include "esp_simple_wifi_ap.h"
 
 #include <string.h>
 
@@ -7,8 +7,8 @@
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 
-#include "esp_ez_wifi_constants.h"
-#include "esp_ez_wifi_helper.h"
+#include "esp_simple_wifi_constants.h"
+#include "esp_simple_wifi_helper.h"
 
 static const char* TAG = "wifi_ap";
 

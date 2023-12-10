@@ -1,9 +1,9 @@
-#include "esp_ez_wifi_helper.h"
+#include "esp_simple_wifi_helper.h"
 
 #include <inttypes.h>
 #include <string.h>
 
-#include "esp_ez_wifi_constants.h"
+#include "esp_simple_wifi_constants.h"
 
 wifi_credential_status_t wifi_credential_validation(const char* ssid,
                                                     const char* password) {
