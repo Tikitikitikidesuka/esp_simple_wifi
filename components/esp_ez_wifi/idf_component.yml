@@ -1,0 +1,6 @@
+dependencies:
+  idf:
+    version: '*'
+description: A hassle-free way of adding wifi to your ESP-IDF projects! 
+url: https://github.com/Tikitikitikidesuka/esp_simple_wifi
+version: 0.0.0
