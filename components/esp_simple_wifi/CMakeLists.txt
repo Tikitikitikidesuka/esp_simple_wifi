@@ -8,6 +8,7 @@ set(srcs
 
 set(private_dependencies
      esp_wifi
+     esp_netif
      nvs_flash
      driver
 )
